@@ -51,17 +51,21 @@ public class UserServiceImpl extends AbstractService implements UserService {
             user.setLocale("zh");
             user.setServicePrivilege("");
             return user;
-        } else if ("root".equals(username)) {
-            User user = new User();
-            user.setUsername(username);
-            user.setPassword(Coder.encodeMd5(username + ":" + User.REALM + ":" + rootPassword));
-            user.setName(username);
-            user.setRole(User.ROOT);
-            user.setEnabled(true);
-            user.setLocale("zh");
-            user.setServicePrivilege("*");
-            return user;
         }
+        /**
+         * 去掉root用户
+         */
+//        else if ("root".equals(username)) {
+//            User user = new User();
+//            user.setUsername(username);
+//            user.setPassword(Coder.encodeMd5(username + ":" + User.REALM + ":" + rootPassword));
+//            user.setName(username);
+//            user.setRole(User.ROOT);
+//            user.setEnabled(true);
+//            user.setLocale("zh");
+//            user.setServicePrivilege("*");
+//            return user;
+//        }
         return null;
     }
 
