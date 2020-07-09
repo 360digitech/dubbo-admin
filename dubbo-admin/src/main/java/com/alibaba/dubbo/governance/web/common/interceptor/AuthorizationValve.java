@@ -20,12 +20,11 @@ import com.alibaba.citrus.service.pipeline.PipelineContext;
 import com.alibaba.citrus.service.pipeline.support.AbstractValve;
 import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
-import com.alibaba.dubbo.common.utils.StringUtils;
 import com.alibaba.dubbo.governance.service.UserService;
 import com.alibaba.dubbo.governance.web.util.WebConstants;
 import com.alibaba.dubbo.registry.common.domain.User;
 import com.alibaba.dubbo.registry.common.util.Coder;
-
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.servlet.http.Cookie;
@@ -101,6 +100,28 @@ public class AuthorizationValve extends AbstractValve {
             User user = null;
             String authType = null;
             String authorization = request.getHeader("Authorization");
+            /**
+             * 优先以原有Basic Auth方式登录，取不到值时按链接参数取值，cookies维持登录态
+             */
+            if (StringUtils.isBlank(authorization)) {
+                Cookie[] cookies = request.getCookies();
+                if (cookies != null && cookies.length > 0) {
+                    for (Cookie cookie : cookies) {
+                        if ("auth".equals(cookie.getName())) {
+                            authorization = cookie.getValue();
+                            break;
+                        }
+                    }
+                }
+                if (StringUtils.isBlank(authorization)) {
+                    authorization = request.getParameter("auth");
+                }
+                if (StringUtils.isNotBlank(authorization)) {
+                    //token解析处理lingxi base64.encoder(username:password)转换为basic auth形式
+                    authorization = Coder.decodeBase64(authorization)
+                            .replace("lingxi", "Basic");
+                }
+            }
             if (authorization != null && authorization.length() > 0) {
                 int i = authorization.indexOf(' ');
                 if (i >= 0) {
@@ -119,6 +140,13 @@ public class AuthorizationValve extends AbstractValve {
             }
             if (user != null && StringUtils.isNotEmpty(user.getUsername())) {
                 request.getSession().setAttribute(WebConstants.CURRENT_USER_KEY, user);
+                if (!"root".equals(user.getUsername())){
+                    //写入cookie，维持登录态
+                    Cookie cookie = new Cookie("auth", Coder.encodeBase64(authorization.replace("Basic", "lingxi")));
+                    cookie.setPath("/");
+                    cookie.setHttpOnly(true);
+                    response.addCookie(cookie);
+                }
                 pipelineContext.invokeNext();
             }
         } else {
