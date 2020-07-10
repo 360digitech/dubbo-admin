@@ -100,9 +100,7 @@ public class AuthorizationValve extends AbstractValve {
             User user = null;
             String authType = null;
             String authorization = request.getHeader("Authorization");
-            /**
-             * 优先以原有Basic Auth方式登录，取不到值时按链接参数取值，cookies维持登录态
-             */
+            //请求头获取不到登录凭证，则从cookies里面取被处理过的自定义凭证，取不到再从url参数上取
             if (StringUtils.isBlank(authorization)) {
                 Cookie[] cookies = request.getCookies();
                 if (cookies != null && cookies.length > 0) {
@@ -117,7 +115,7 @@ public class AuthorizationValve extends AbstractValve {
                     authorization = request.getParameter("auth");
                 }
                 if (StringUtils.isNotBlank(authorization)) {
-                    //token解析处理lingxi base64.encoder(username:password)转换为basic auth形式
+                    //替换关键字，沿用Basic Auth的逻辑
                     authorization = Coder.decodeBase64(authorization)
                             .replace("lingxi", "Basic");
                 }
@@ -126,6 +124,7 @@ public class AuthorizationValve extends AbstractValve {
                 int i = authorization.indexOf(' ');
                 if (i >= 0) {
                     authType = authorization.substring(0, i);
+                    //bGluZ3hpIFozVmxjM1E2WjNWbGMzUT0=
                     String authPrincipal = authorization.substring(i + 1);
                     if (BASIC_CHALLENGE.equalsIgnoreCase(authType)) {
                         user = loginByBase(authPrincipal);
@@ -140,13 +139,15 @@ public class AuthorizationValve extends AbstractValve {
             }
             if (user != null && StringUtils.isNotEmpty(user.getUsername())) {
                 request.getSession().setAttribute(WebConstants.CURRENT_USER_KEY, user);
-                if (!"root".equals(user.getUsername())){
-                    //写入cookie，维持登录态
+
+                if (!"root".equals(user.getUsername())) {
                     Cookie cookie = new Cookie("auth", Coder.encodeBase64(authorization.replace("Basic", "lingxi")));
-                    cookie.setPath("/");
+                    cookie.setPath(contextPath);
                     cookie.setHttpOnly(true);
                     response.addCookie(cookie);
                 }
+                Cookie cookie = new Cookie("locale", "zh");
+                response.addCookie(cookie);
                 pipelineContext.invokeNext();
             }
         } else {

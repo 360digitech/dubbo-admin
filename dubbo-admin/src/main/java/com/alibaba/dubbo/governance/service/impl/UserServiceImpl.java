@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * IBatisUserService
- *
  */
 public class UserServiceImpl extends AbstractService implements UserService {
 
@@ -60,7 +59,9 @@ public class UserServiceImpl extends AbstractService implements UserService {
 //            user.setUsername(username);
 //            user.setPassword(Coder.encodeMd5(username + ":" + User.REALM + ":" + rootPassword));
 //            user.setName(username);
-//            user.setRole(User.ROOT);
+//            //将ROOT用户权限设置为只读
+////            user.setRole(User.ROOT);
+//            user.setRole(User.GUEST);
 //            user.setEnabled(true);
 //            user.setLocale("zh");
 //            user.setServicePrivilege("*");
