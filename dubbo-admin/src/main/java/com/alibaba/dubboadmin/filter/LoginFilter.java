@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -100,33 +101,28 @@ public class LoginFilter implements Filter{
         if (uri.equals(logout)) {
             if (!isLogout(req)) {
                 setLogout(true, resp);
-                showLoginForm(resp);
+                resp.sendRedirect(contextPath == null || contextPath.length() == 0 ? "/" : contextPath);
+//                showLoginForm(resp);
             } else {
                 setLogout(false, resp);
                 resp.sendRedirect(contextPath == null || contextPath.length() == 0 ? "/" : contextPath);
             }
             return;
         }
-        User user = null;
-        String authType = null;
-        String authorization = req.getHeader("Authorization");
-        if (authorization != null && authorization.length() > 0) {
-            int i = authorization.indexOf(' ');
-            if (i >= 0) {
-                authType = authorization.substring(0, i);
-                String authPrincipal = authorization.substring(i + 1);
-                if (BASIC_CHALLENGE.equalsIgnoreCase(authType)) {
-                    user = loginByBase(authPrincipal);
-                } else if (DIGEST_CHALLENGE.equalsIgnoreCase(authType)) {
-                    user = loginByDigest(authPrincipal, req);
-                }
-            }
+        User user = (User) req.getSession().getAttribute(WebConstants.CURRENT_USER_KEY);
+
+        if(user==null){
+            String username = req.getParameter("username");
+            user = new User();
+            user.setUsername(StringUtils.isNotEmpty(username)?username:"guest");
+            user.setPassword(Coder.encodeMd5("guest:" + User.REALM + ":guest"));
+            user.setName(StringUtils.isNotEmpty(username)?username:"guest");
+            user.setRole(User.GUEST);
+            user.setEnabled(true);
+            user.setLocale("zh");
+            user.setServicePrivilege("");
         }
-        if (user == null || user.getUsername() == null || user.getUsername().length() == 0) {
-            showLoginForm(resp);
-            return;
-            //pipelineContext.breakPipeline(1);
-        }
+
         if (user != null && StringUtils.isNotEmpty(user.getUsername())) {
             req.getSession().setAttribute(WebConstants.CURRENT_USER_KEY, user);
             chain.doFilter(request, response);
