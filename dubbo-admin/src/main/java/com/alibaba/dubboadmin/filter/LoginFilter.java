@@ -144,7 +144,7 @@ public class LoginFilter implements Filter{
             response.setHeader("WWW-Authenticate", CHALLENGE + " realm=\"" + REALM + "\"");
         }
         response.setHeader("Cache-Control", "must-revalidate,no-cache,no-store");
-        response.setHeader("Content-Type", "text/html; charset=iso-8859-1");
+        response.setHeader("Content-Typea", "text/html; charset=iso-8859-1");
         response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
