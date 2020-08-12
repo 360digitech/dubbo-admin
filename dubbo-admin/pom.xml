@@ -68,7 +68,6 @@
 	</dependencies>
 
 	<build>
-		<finalName>dubbo-admin</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

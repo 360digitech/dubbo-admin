@@ -28,5 +28,6 @@ public class DubboAdminApplication {
 		ApplicationContext act = SpringApplication.run(DubboAdminApplication.class, args);
 		SpringUtil.setApplicationContext(act);
 
+
 	}
 }
